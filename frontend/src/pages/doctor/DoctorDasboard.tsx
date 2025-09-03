@@ -42,7 +42,6 @@ export default function DoctorDashboard() {
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const user = useAppSelector((state) => state.auth.user);
 
-  // Fetch appointments
   const fetchAppointments = async () => {
     setLoadingAppointments(true);
     try {

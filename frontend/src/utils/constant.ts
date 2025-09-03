@@ -1,1 +1,1 @@
-export const BASE_URL = "https://appointment-manager-node.onrender.com/api/v1"
+export const BASE_URL = process.env.REACT_APP_BASE_URL;
