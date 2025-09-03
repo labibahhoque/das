@@ -1,6 +1,9 @@
 import type React from "react";
 import { useState } from "react";
 import { EyeIcon, EyeSlashIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import axios from "axios";
+import { BASE_URL } from "../../utils/constant";
+import { useNavigate } from "react-router-dom";
 
 type UserRole = "patient" | "doctor";
 
@@ -54,6 +57,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const getCurrentFormData = (): FormData => {
     return activeTab === "patient" ? patientData : doctorData;
@@ -63,21 +67,21 @@ export default function RegisterPage() {
     const newErrors: FormErrors = {};
     const formData = getCurrentFormData();
 
-    // Name validation
+
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
     } else if (formData.name.trim().length < 2) {
       newErrors.name = "Name must be at least 2 characters";
     }
 
-    // Email validation
+
     if (!formData.email) {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
     }
 
-    // Password validation
+
     if (!formData.password) {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
@@ -87,14 +91,14 @@ export default function RegisterPage() {
         "Password must contain at least one uppercase letter, one lowercase letter, and one number";
     }
 
-    // Confirm password validation
+
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
-    // Doctor-specific validation
+
     if (activeTab === "doctor") {
       const doctorFormData = formData as DoctorFormData;
       if (!doctorFormData.specialization.trim()) {
@@ -102,7 +106,7 @@ export default function RegisterPage() {
       }
     }
 
-    // Photo URL validation (optional but if provided, should be valid)
+
     if (formData.photo_url && formData.photo_url.trim()) {
       try {
         new URL(formData.photo_url);
@@ -116,33 +120,45 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
-    setIsLoading(true);
-    setErrors({});
+  setIsLoading(true);
+  setErrors({});
 
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+  try {
+    const formData = getCurrentFormData();
 
-      const formData = getCurrentFormData();
-      console.log("Registration attempt:", { ...formData, role: activeTab });
-
-      // For demo purposes, simulate a registration error
-      if (formData.email === "test@error.com") {
-        setErrors({ general: "Email already exists" });
-      } else {
-        // Redirect to login or dashboard
-        window.location.href = "/login";
-      }
-    } catch (error) {
-      setErrors({ general: "An error occurred. Please try again." });
-    } finally {
-      setIsLoading(false);
+    if (activeTab === "patient") {
+      await axios.post(`${BASE_URL}/auth/register/patient`, {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        photo_url: formData.photo_url || undefined,
+      });
+    } else {
+      await axios.post(`${BASE_URL}/auth/register/doctor`, {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        specialization: (formData as DoctorFormData).specialization,
+        photo_url: formData.photo_url || undefined,
+      });
     }
-  };
+    alert("Registration successful! Please login.");
+    window.location.href = "/login";
+  } catch (error: any) {
+    console.error("Registration error:", error);
+    if (error.response?.data?.message) {
+      setErrors({ general: error.response.data.message });
+    } else {
+      setErrors({ general: "An error occurred. Please try again." });
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleInputChange = (
     field: keyof PatientFormData | keyof DoctorFormData,
@@ -174,7 +190,6 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-white shadow-lg rounded-lg border border-gray-200 p-8">
-          {/* Tab Navigation */}
           <div className="mb-6">
             <nav className="flex space-x-4" aria-label="Tabs">
               <button
@@ -202,7 +217,6 @@ export default function RegisterPage() {
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
-              {/* Name Field */}
               <div>
                 <label
                   htmlFor="name"
@@ -231,7 +245,6 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Email Field */}
               <div>
                 <label
                   htmlFor="email"
@@ -259,8 +272,6 @@ export default function RegisterPage() {
                   )}
                 </div>
               </div>
-
-              {/* Specialization Field (Doctor only) */}
               {activeTab === "doctor" && (
                 <div>
                   <label
@@ -307,7 +318,6 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              {/* Password Field */}
               <div>
                 <label
                   htmlFor="password"
@@ -351,7 +361,6 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Confirm Password Field */}
               <div>
                 <label
                   htmlFor="confirmPassword"
@@ -395,7 +404,6 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Photo URL Field (Optional) */}
               <div>
                 <label
                   htmlFor="photo_url"
@@ -432,14 +440,12 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* General Error */}
             {errors.general && (
               <div className="rounded-md bg-red-50 p-4">
                 <div className="text-sm text-red-700">{errors.general}</div>
               </div>
             )}
 
-            {/* Submit Button */}
             <div>
               <button
                 type="submit"
@@ -478,7 +484,6 @@ export default function RegisterPage() {
               </button>
             </div>
 
-            {/* Additional Links */}
             <div className="text-center">
               <div className="text-sm">
                 <span className="text-gray-600">Already have an account? </span>
