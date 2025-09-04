@@ -85,6 +85,10 @@ A comprehensive web application for managing doctor appointments, built with mod
 - `GET /appointments/doctor` - Get doctor's appointments
 - `PUT /appointments/:id/status` - Update appointment status
 
+### Deployment
+-Deployed on vercel
+-Live Demo https://doctor-appointmnet-system-umber.vercel.app/
+
 ##  Usage
 
 ### For Patients
